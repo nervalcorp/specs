@@ -1,3 +1,4 @@
+Instructions/Format
 
 Found (Oct 29, 2024 - by John)
 Use the link below:
@@ -25,3 +26,7 @@ Sherwood Park
 AB
 T8H0X5
 Canada
+
+/////////////////////////////////////////////////////////////////
+
+Filenaming format: Nerval-*FirstName*-*LastName*.vcf
