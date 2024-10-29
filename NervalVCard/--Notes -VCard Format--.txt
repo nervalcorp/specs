@@ -19,6 +19,7 @@ https://www.youtube.com/@nervalcorporation8621
 /////////////////////////////////////////////////////////////////
 
 tel:+17804521111
+tel:+17804521111,116 (w Extension sample)
 mailto: info@nervalcorp.com
 
 1001 Buckingham Drive
@@ -39,3 +40,8 @@ Save to: W:\Design Files\Website\Github Rep\nervalcorp\specs\NervalVCard
 VCARD URL Link (Use for Generating QR Code)
 
 https://nervalcorp.github.io/specs/NervalVCard/'FILENAME'.vcf
+
+/////////////////////////////////////////////////////////////////
+
+Adding title (Under ORG):
+'TITLE:Sample Title'
