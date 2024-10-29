@@ -42,6 +42,3 @@ VCARD URL Link (Use for Generating QR Code)
 https://nervalcorp.github.io/specs/NervalVCard/'FILENAME'.vcf
 
 /////////////////////////////////////////////////////////////////
-
-Adding title (Under ORG):
-'TITLE:Sample Title'
