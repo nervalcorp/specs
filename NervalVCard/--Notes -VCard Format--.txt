@@ -29,7 +29,13 @@ Canada
 
 /////////////////////////////////////////////////////////////////
 
-Filenaming format: Nerval-*FirstName*-*LastName*.vcf
+Filenaming format: Nerval-'FirstName'-'LastName'.vcf
 Save to: W:\Design Files\Website\Github Rep\nervalcorp\specs\NervalVCard
 
 *Push Origin* using GitHub to Update/Add file - Hosting files
+
+/////////////////////////////////////////////////////////////////
+
+VCARD URL Link (Use for Generating QR Code)
+
+https://nervalcorp.github.io/specs/NervalVCard/'FILENAME'.vcf
