@@ -30,3 +30,4 @@ Canada
 /////////////////////////////////////////////////////////////////
 
 Filenaming format: Nerval-*FirstName*-*LastName*.vcf
+Save to: W:\Design Files\Website\Github Rep\nervalcorp\specs\NervalVCard
