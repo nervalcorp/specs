@@ -1,0 +1,2 @@
+product_name,description,variants,variant_prices,images
+Test Product,This is a test product description.,Size;S|M|L|XL,S:19.99;M:21.99;L:23.99;XL:25.99,"https://via.placeholder.com/600,https://via.placeholder.com/601"
