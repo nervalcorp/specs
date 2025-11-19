@@ -1,0 +1,5 @@
+Title,Model,Storage,Color,Price,Image,Description,Features,Specs,Warranty
+Premium Smart Device,standard,64gb,space-gray,499.99,http://static.photos/technology/640x360/42,Standard model in Space Gray with 64GB storage,High-resolution display|Long battery life,"Display: 6.1"" Retina|Processor: A15 Bionic",1 year
+Premium Smart Device,standard,128gb,silver,499.99,http://static.photos/technology/640x360/43,Standard model in Silver with 128GB storage,High-resolution display|Long battery life,"Display: 6.1"" Retina|Processor: A15 Bionic",1 year
+Premium Smart Device,pro,128gb,silver,699.99,http://static.photos/technology/640x360/44,Pro model in Silver with 128GB storage,High-resolution display|Long battery life|Advanced camera system,"Display: 6.7"" Retina|Processor: A16 Bionic",1.5 year
+Premium Smart Device,max,256gb,gold,899.99,http://static.photos/technology/640x360/45,Max model in Gold with 256GB storage,High-resolution display|Long battery life|Advanced camera system|ProMotion display,"Display: 6.7"" ProMotion|Processor: A17 Pro",2 year
