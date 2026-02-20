@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refrigeration Load Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07101f;
+  --surface: #0f1e32;
+  --surface2: #162540;
+  --border: #1e3a5f;
+  --accent: #00c8ff;
+  --accent2: #0077b6;
+  --accent-glow: rgba(0,200,255,0.12);
+  --text: #deeeff;
+  --muted: #5a7a9a;
+  --success: #00e5a0;
+  --danger: #ff5e5e;
+  --warning: #ffc857;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,200,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none; z-index: 0;
+}
+
+/* ── SIDEBAR ── */
+.layout { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+.sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+
+.sidebar-logo .icon {
+  font-size: 22px;
+  width: 40px; height: 40px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+
+.sidebar-logo h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px; font-weight: 800;
+  color: #fff; line-height: 1.2;
+}
+
+.sidebar-logo h1 span { color: var(--accent); }
+
+.sidebar-subtitle {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 0.5px; line-height: 1.4;
+}
+
+.nav-section-label {
+  font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--muted);
+  padding: 16px 20px 8px;
+}
+
+.nav-item {
+  display: flex; align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 12px; color: var(--muted);
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  line-height: 1.3;
+}
+
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(0,200,255,0.06);
+}
+
+.nav-item .nav-icon {
+  font-size: 14px; width: 20px; text-align: center; flex-shrink: 0;
+}
+
+.nav-item .nav-badge {
+  margin-left: auto;
+  font-size: 9px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 1px 6px; border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+
+.nav-item.active .nav-badge {
+  background: var(--accent-glow); border-color: var(--accent); color: var(--accent);
+}
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  padding: 36px 40px 80px;
+  min-width: 0;
+}
+
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.3s ease; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  margin-bottom: 32px;
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title-block h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800;
+  color: #fff; line-height: 1.1;
+}
+
+.page-title-block h2 span { color: var(--accent); }
+
+.page-title-block p {
+  color: var(--muted); font-size: 12px; margin-top: 5px;
+}
+
+.badge {
+  display: inline-block;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent);
+  color: var(--accent); font-size: 9px;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 4px; margin-top: 8px;
+}
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 9px; letter-spacing: 2.5px;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent), transparent);
+}
+
+/* ── FORM ── */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+
+.form-group label {
+  font-size: 10px; letter-spacing: 0.8px;
+  color: var(--muted); text-transform: uppercase;
+}
+
+.form-group input,
+.form-group select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 13px;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none; -webkit-appearance: none;
+}
+
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='%235a7a9a'%3E%3Cpath d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px; cursor: pointer;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.dim-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── BUTTON ── */
+.btn-calc {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border: none; border-radius: 9px;
+  color: #000;
+  font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+  margin-top: 8px;
+  box-shadow: 0 4px 18px rgba(0,200,255,0.22);
+}
+.btn-calc:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,200,255,0.32); }
+.btn-calc:active { transform: translateY(0); }
+
+.btn-pdf {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px; letter-spacing: 1px;
+  text-transform: uppercase; cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  margin-top: 18px;
+}
+.btn-pdf:hover { background: var(--accent-glow); box-shadow: 0 0 14px var(--accent-glow); }
+
+/* ── RESULTS ── */
+.results-block { display: none; animation: fadeUp 0.35s ease; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px; margin-bottom: 20px;
+}
+
+.s-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+
+.s-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.s-value { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 700; color: #fff; line-height: 1; }
+.s-unit { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.s-card.hl .s-value { color: var(--success); }
+
+.out-table { width: 100%; border-collapse: collapse; }
+.out-table th {
+  font-size: 9px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--accent);
+  padding: 8px 14px; text-align: left;
+  border-bottom: 1px solid var(--border); font-weight: 500;
+}
+.out-table th:not(:first-child) { text-align: right; }
+.out-table td {
+  padding: 11px 14px; font-size: 12px;
+  border-bottom: 1px solid rgba(30,58,95,0.4);
+}
+.out-table td:not(:first-child) { text-align: right; }
+.out-table tr:last-child td { border-bottom: none; }
+.out-table .vcel { color: var(--accent); font-weight: 500; }
+.out-table .pcel { color: var(--muted); font-size: 11px; }
+.out-table .trow td { background: rgba(0,200,255,0.05); color: #fff; font-weight: 600; border-top: 1px solid var(--border); }
+.out-table .trow .vcel { color: var(--success); font-size: 14px; }
+
+.bar-track {
+  height: 3px; background: var(--surface2);
+  border-radius: 3px; overflow: hidden;
+  width: 100px; display: inline-block;
+  vertical-align: middle; margin-right: 6px;
+}
+.bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  transition: width 0.6s ease;
+}
+
+.echo-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+  font-size: 11px;
+}
+.echo-item {
+  display: flex; justify-content: space-between;
+  padding: 7px 11px;
+  background: var(--surface2); border-radius: 6px;
+}
+.ek { color: var(--muted); }
+.ev { color: var(--text); }
+
+/* ── DASHBOARD ── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px; margin-top: 8px;
+}
+
+.dash-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px;
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+}
+.dash-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent), transparent);
+}
+.dash-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px var(--accent-glow);
+  transform: translateY(-2px);
+}
+.dash-icon { font-size: 26px; margin-bottom: 12px; }
+.dash-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px; font-weight: 700;
+  color: #fff; margin-bottom: 5px; line-height: 1.2;
+}
+.dash-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+.dash-tag {
+  display: inline-block; margin-top: 10px;
+  font-size: 9px; padding: 2px 7px;
+  border-radius: 10px; letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.tag-cooler { background: rgba(0,200,255,0.1); color: var(--accent); border: 1px solid rgba(0,200,255,0.2); }
+.tag-freezer { background: rgba(100,180,255,0.08); color: #64b4ff; border: 1px solid rgba(100,180,255,0.2); }
+.tag-specialty { background: rgba(255,200,87,0.08); color: var(--warning); border: 1px solid rgba(255,200,87,0.2); }
+.tag-warehouse { background: rgba(0,229,160,0.08); color: var(--success); border: 1px solid rgba(0,229,160,0.2); }
+
+@media print {
+  .sidebar, .btn-calc, .btn-pdf, #dashboard, .page:not(.active) { display: none !important; }
+  body, .layout, .main { display: block; background: white; color: black; }
+  body::before { display: none; }
+  .card { border: 1px solid #ccc; background: white; box-shadow: none; }
+  .card::before { display: none; }
+  .results-block { display: block !important; }
+  :root {
+    --text: #111; --muted: #555; --accent: #0077b6; --accent2: #0077b6;
+    --surface: white; --surface2: #f5f5f5; --border: #ddd; --bg: white; --success: #007a5a;
+  }
+  .out-table .trow td { background: #f0f0f0; }
+}
+@media (max-width: 900px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 12px; gap: 4px; }
+  .sidebar-header { display: none; }
+  .nav-section-label { display: none; }
+  .nav-item { padding: 8px 12px; border-left: none; border-bottom: 2px solid transparent; font-size: 11px; }
+  .nav-item.active { border-bottom-color: var(--accent); border-left: none; background: transparent; }
+  .main { padding: 20px 16px 60px; }
+  .summary-grid { grid-template-columns: 1fr; }
+  .echo-grid { grid-template-columns: 1fr; }
+  .dim-row { grid-template-columns: 1fr 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="icon">❄️</div>
+      <h1>ICC Energy Inc. <br>Refrig. <span>Load</span><br>Calculator</h1>
+    </div>
+    <!--<div class="sidebar-subtitle">ASHRAE Method · Heat Load Estimation</div>-->
+  </div>
+
+  <div class="nav-section-label">Overview</div>
+  <div class="nav-item active" onclick="showPage('dashboard')">
+    <span class="nav-icon">🏠</span> Dashboard
+  </div>
+
+  <div class="nav-section-label">Coolers</div>
+  <div class="nav-item" onclick="showPage('gwc')"><span class="nav-icon">🧊</span> General Walk-in Cooler <span class="nav-badge">cooler</span></div>
+  <div class="nav-item" onclick="showPage('gwc_dr')"><span class="nav-icon">🚪</span> Walk-in Cooler w/ DR <span class="nav-badge">cooler</span></div>
+  <div class="nav-item" onclick="showPage('csc')"><span class="nav-icon">🏪</span> Convenience Store Cooler <span class="nav-badge">cooler</span></div>
+  <div class="nav-item" onclick="showPage('pc')"><span class="nav-icon">🥦</span> Produce Cooler <span class="nav-badge">cooler</span></div>
+  <div class="nav-item" onclick="showPage('fc')"><span class="nav-icon">🌸</span> Floral Cooler <span class="nav-badge">cooler</span></div>
+
+  <div class="nav-section-label">Freezers</div>
+  <div class="nav-item" onclick="showPage('gwf')"><span class="nav-icon">🧊</span> General Walk-in Freezer <span class="nav-badge">freezer</span></div>
+  <div class="nav-item" onclick="showPage('gwf_dr')"><span class="nav-icon">🚪</span> Walk-in Freezer w/ DR <span class="nav-badge">freezer</span></div>
+
+  <div class="nav-section-label">Warehouse</div>
+  <div class="nav-item" onclick="showPage('wc')"><span class="nav-icon">🏭</span> Warehouse Cooler <span class="nav-badge">warehouse</span></div>
+  <div class="nav-item" onclick="showPage('wf')"><span class="nav-icon">🏭</span> Warehouse Freezer <span class="nav-badge">warehouse</span></div>
+  <div class="nav-item" onclick="showPage('pw')"><span class="nav-icon">🥬</span> Produce Warehouse <span class="nav-badge">warehouse</span></div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="page active">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Load <span>Calculator</span></h2>
+        <p>Select a calculator type to get started</p>
+        <div class="badge">10 Calculator Types</div>
+      </div>
+    </div>
+    <div class="section-label">Coolers</div>
+    <div class="dash-grid">
+      <div class="dash-card" onclick="showPage('gwc')">
+        <div class="dash-icon">🧊</div>
+        <div class="dash-name">General Walk-in Cooler</div>
+        <div class="dash-desc">Standard walk-in cooler load estimation without door resistance.</div>
+        <div class="dash-tag tag-cooler">Cooler</div>
+      </div>
+      <div class="dash-card" onclick="showPage('gwc_dr')">
+        <div class="dash-icon">🚪</div>
+        <div class="dash-name">Walk-in Cooler with DR</div>
+        <div class="dash-desc">Cooler with door resistance factor and variable door count.</div>
+        <div class="dash-tag tag-cooler">Cooler · Door Resistance</div>
+      </div>
+      <div class="dash-card" onclick="showPage('csc')">
+        <div class="dash-icon">🏪</div>
+        <div class="dash-name">Convenience Store Cooler</div>
+        <div class="dash-desc">High traffic convenience store with enhanced infiltration factor.</div>
+        <div class="dash-tag tag-cooler">Cooler · High Traffic</div>
+      </div>
+      <div class="dash-card" onclick="showPage('pc')">
+        <div class="dash-icon">🥦</div>
+        <div class="dash-name">Produce Cooler</div>
+        <div class="dash-desc">Produce-specific cooler with specialized infiltration formula.</div>
+        <div class="dash-tag tag-cooler">Cooler · Produce</div>
+      </div>
+      <div class="dash-card" onclick="showPage('fc')">
+        <div class="dash-icon">🌸</div>
+        <div class="dash-name">Floral Cooler</div>
+        <div class="dash-desc">Floral display cooler with higher exterior temperature assumptions.</div>
+        <div class="dash-tag tag-cooler">Cooler · Floral</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:28px">Freezers</div>
+    <div class="dash-grid">
+      <div class="dash-card" onclick="showPage('gwf')">
+        <div class="dash-icon">🧊</div>
+        <div class="dash-name">General Walk-in Freezer</div>
+        <div class="dash-desc">Standard walk-in freezer without door resistance factor.</div>
+        <div class="dash-tag tag-freezer">Freezer</div>
+      </div>
+      <div class="dash-card" onclick="showPage('gwf_dr')">
+        <div class="dash-icon">🚪</div>
+        <div class="dash-name">Walk-in Freezer with DR</div>
+        <div class="dash-desc">Freezer with door resistance and variable door count inputs.</div>
+        <div class="dash-tag tag-freezer">Freezer · Door Resistance</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:28px">Warehouse</div>
+    <div class="dash-grid">
+      <div class="dash-card" onclick="showPage('wc')">
+        <div class="dash-icon">🏭</div>
+        <div class="dash-name">Warehouse Cooler</div>
+        <div class="dash-desc">Large-scale cooler with fixed lighting and forklift loads included.</div>
+        <div class="dash-tag tag-warehouse">Warehouse · Cooler</div>
+      </div>
+      <div class="dash-card" onclick="showPage('wf')">
+        <div class="dash-icon">🏭</div>
+        <div class="dash-name">Warehouse Freezer</div>
+        <div class="dash-desc">Large-scale freezer with additional misc motor loads.</div>
+        <div class="dash-tag tag-warehouse">Warehouse · Freezer</div>
+      </div>
+      <div class="dash-card" onclick="showPage('pw')">
+        <div class="dash-icon">🥬</div>
+        <div class="dash-name">Produce Warehouse</div>
+        <div class="dash-desc">High-humidity produce warehouse with respiration heat factor.</div>
+        <div class="dash-tag tag-warehouse">Warehouse · Produce</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: General Walk-in Cooler -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="gwc" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>General <span>Walk-in Cooler</span></h2>
+        <p>Standard walk-in cooler · No door resistance factor</p>
+        <div class="badge">Cooler</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="gwc_Ti" value="35" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="gwc_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="gwc_RHi" value="80" step="1" min="0" max="100"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="gwc_RHo" value="55" step="1" min="0" max="100"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="gwc_L" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="gwc_D" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="gwc_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="gwc_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+            <option value="Above Grade (No gap)">Above Grade (No gap)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="gwc_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="gwc_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="gwc_RT" value="18" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcGWC()">⚡ Calculate Load</button>
+    </div>
+    <div id="gwc_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="gwc_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="gwc_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="gwc_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Walk-in Cooler with DR -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="gwc_dr" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Walk-in Cooler <span>with DR</span></h2>
+        <p>Walk-in cooler with door resistance factor</p>
+        <div class="badge">Cooler · Door Resistance</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="gwcdr_Ti" value="35" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="gwcdr_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="gwcdr_RHi" value="80" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="gwcdr_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="gwcdr_L" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="gwcdr_D" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="gwcdr_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="gwcdr_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+            <option value="Above Grade (No gap)">Above Grade (No gap)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="gwcdr_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Number of Doors</label><input type="number" id="gwcdr_doors" value="1" min="1" max="10"></div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="gwcdr_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="gwcdr_RT" value="18" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcGWC_DR()">⚡ Calculate Load</button>
+    </div>
+    <div id="gwcdr_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="gwcdr_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="gwcdr_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="gwcdr_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: General Walk-in Freezer -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="gwf" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>General <span>Walk-in Freezer</span></h2>
+        <p>Standard walk-in freezer · No door resistance factor</p>
+        <div class="badge">Freezer</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="gwf_Ti" value="-10" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="gwf_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="gwf_RHi" value="95" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="gwf_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="gwf_L" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="gwf_D" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="gwf_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="gwf_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="gwf_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="gwf_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="gwf_RT" value="18" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcGWF()">⚡ Calculate Load</button>
+    </div>
+    <div id="gwf_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="gwf_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="gwf_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="gwf_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Walk-in Freezer with DR -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="gwf_dr" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Walk-in Freezer <span>with DR</span></h2>
+        <p>Walk-in freezer with door resistance factor</p>
+        <div class="badge">Freezer · Door Resistance</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="gwfdr_Ti" value="-10" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="gwfdr_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="gwfdr_RHi" value="95" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="gwfdr_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="gwfdr_L" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="gwfdr_D" value="10" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="gwfdr_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="gwfdr_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="gwfdr_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Number of Doors</label><input type="number" id="gwfdr_doors" value="1" min="1" max="10"></div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="gwfdr_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="gwfdr_RT" value="18" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcGWF_DR()">⚡ Calculate Load</button>
+    </div>
+    <div id="gwfdr_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="gwfdr_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="gwfdr_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="gwfdr_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Convenience Store Cooler -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="csc" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Convenience Store <span>Cooler</span></h2>
+        <p>High traffic cooler · 1.7× infiltration factor</p>
+        <div class="badge">Cooler · High Traffic</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="csc_Ti" value="40" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="csc_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="csc_RHi" value="78" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="csc_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="csc_L" value="60" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="csc_D" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="csc_H" value="30" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="csc_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="csc_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="csc_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="csc_RT" value="16" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcCSC()">⚡ Calculate Load</button>
+    </div>
+    <div id="csc_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="csc_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="csc_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="csc_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Produce Cooler -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="pc" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Produce <span>Cooler</span></h2>
+        <p>Produce storage · Exponential infiltration formula</p>
+        <div class="badge">Cooler · Produce</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="pc_Ti" value="30" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="pc_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="pc_RHi" value="87" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="pc_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="pc_L" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="pc_D" value="60" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="pc_H" value="30" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="pc_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="pc_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="pc_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="pc_RT" value="16" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcPC()">⚡ Calculate Load</button>
+    </div>
+    <div id="pc_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="pc_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="pc_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="pc_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Floral Cooler -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="fc" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Floral <span>Cooler</span></h2>
+        <p>Floral display cooler · Higher exterior temp default</p>
+        <div class="badge">Cooler · Floral</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="fc_Ti" value="35" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="fc_To" value="100" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="fc_RHi" value="87" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="fc_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="fc_L" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="fc_D" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="fc_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="fc_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="fc_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="fc_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="fc_RT" value="16" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcFC()">⚡ Calculate Load</button>
+    </div>
+    <div id="fc_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="fc_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="fc_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="fc_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Warehouse Cooler -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="wc" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Warehouse <span>Cooler</span></h2>
+        <p>Large-scale cooler · Includes lighting & forklift loads</p>
+        <div class="badge">Warehouse · Cooler</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="wc_Ti" value="40" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="wc_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="wc_RHi" value="83" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="wc_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="wc_L" value="75" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="wc_D" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="wc_H" value="30" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="wc_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="wc_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="wc_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="wc_RT" value="16" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcWC()">⚡ Calculate Load</button>
+    </div>
+    <div id="wc_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="wc_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="wc_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="wc_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Warehouse Freezer -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="wf" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Warehouse <span>Freezer</span></h2>
+        <p>Large-scale freezer · Includes lighting & motor loads</p>
+        <div class="badge">Warehouse · Freezer</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="wf_Ti" value="-20" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="wf_To" value="85" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="wf_RHi" value="95" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="wf_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="wf_L" value="90" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="wf_D" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="wf_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="wf_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="wf_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="wf_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="wf_RT" value="18" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcWF()">⚡ Calculate Load</button>
+    </div>
+    <div id="wf_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="wf_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="wf_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="wf_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════ -->
+  <!-- PAGE: Produce Warehouse -->
+  <!-- ═══════════════════════════════════════════════ -->
+  <div id="pw" class="page">
+    <div class="page-header">
+      <div class="page-title-block">
+        <h2>Produce <span>Warehouse</span></h2>
+        <p>High-humidity produce storage · Respiration heat factor</p>
+        <div class="badge">Warehouse · Produce</div>
+      </div>
+    </div>
+    <div class="section-label">01 — Temperature Conditions</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Box Interior Temp (°F)</label><input type="number" id="pw_Ti" value="40" step="0.1"></div>
+        <div class="form-group"><label>Box Exterior Temp (°F)</label><input type="number" id="pw_To" value="95" step="0.1"></div>
+        <div class="form-group"><label>Box Interior RH (%)</label><input type="number" id="pw_RHi" value="85" step="1"></div>
+        <div class="form-group"><label>Box Exterior RH (%)</label><input type="number" id="pw_RHo" value="55" step="1"></div>
+      </div>
+    </div>
+    <div class="section-label">02 — Box Dimensions</div>
+    <div class="card">
+      <div class="dim-row">
+        <div class="form-group"><label>Length (ft)</label><input type="number" id="pw_L" value="50" step="0.5" min="1"></div>
+        <div class="form-group"><label>Depth (ft)</label><input type="number" id="pw_D" value="90" step="0.5" min="1"></div>
+        <div class="form-group"><label>Height (ft)</label><input type="number" id="pw_H" value="10" step="0.5" min="1"></div>
+      </div>
+    </div>
+    <div class="section-label">03 — Configuration</div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Floor Type</label>
+          <select id="pw_floor">
+            <option value="On Grade">On Grade</option>
+            <option value="Above Grade">Above Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Box Location</label>
+          <select id="pw_loc">
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Safety Factor (%)</label><input type="number" id="pw_SF" value="10" min="0" max="50"></div>
+        <div class="form-group"><label>System Run Time (hrs/day)</label><input type="number" id="pw_RT" value="16" min="1" max="24" step="0.5"></div>
+      </div>
+      <button class="btn-calc" onclick="calcPW()">⚡ Calculate Load</button>
+    </div>
+    <div id="pw_results" class="results-block">
+      <div class="section-label">04 — Input Summary</div>
+      <div class="card"><div id="pw_echo" class="echo-grid"></div></div>
+      <div class="section-label">05 — Key Results</div>
+      <div id="pw_summary" class="summary-grid"></div>
+      <div class="section-label">06 — Load Breakdown</div>
+      <div class="card">
+        <table id="pw_table" class="out-table"></table>
+        <button class="btn-pdf" onclick="window.print()">🖨️ Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+</div><!-- end .layout -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// BACKGROUND LOOKUP DATA (from Excel Background sheet)
+// ═══════════════════════════════════════════════════════
+
+// Misc load lookup tables (volume → load)
+const MISC = {
+  // General Walk-in Cooler / Cooler with DR (C4:F19)
+  cooler: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:2183.77088},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:6551.3126},{v:36100,l:8735.0835},{v:45100,l:6551.3126},
+    {v:58100,l:9826.9690},{v:105100,l:19653.9379},{v:155000,l:26205.2506},
+    {v:1e10,l:null}
+  ],
+  // General Walk-in Freezer (M4:P20)
+  freezer: [
+    {v:0,l:312.7797},{v:600,l:625.5594},{v:1350,l:938.3390},
+    {v:2570,l:1251.1187},{v:3210,l:1563.8984},{v:4810,l:1876.6781},
+    {v:5770,l:2001.7900},{v:6260,l:3002.685},{v:15010,l:4003.5799},
+    {v:21700,l:6005.3699},{v:27500,l:9008.0549},{v:36100,l:12010.7398},
+    {v:58100,l:18016.1098},{v:105100,l:18016.1098},{v:155000,l:18016.1098},
+    {v:177500,l:36032.2195},{v:1e10,l:null}
+  ],
+  // Convenience Store (C29:F44)
+  csc: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:2183.77088},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:6551.3126},{v:36100,l:8735.0835},{v:45100,l:6551.3126},
+    {v:58100,l:9826.9690},{v:105100,l:19653.9379},{v:155000,l:26205.2506},
+    {v:1e10,l:null}
+  ],
+  // Produce Cooler (M29:P44)
+  produce_cooler: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:2183.77088},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:6551.3126},{v:36100,l:8735.0835},{v:45100,l:6551.3126},
+    {v:58100,l:9826.9690},{v:105100,l:19653.9379},{v:155000,l:26205.2506},
+    {v:1e10,l:null}
+  ],
+  // Warehouse Cooler (C54:F69)
+  wh_cooler: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:2183.77088},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:6551.3126},{v:36100,l:8735.0835},{v:45100,l:6551.3126},
+    {v:58100,l:9826.9690},{v:105100,l:19653.9379},{v:155000,l:26205.2506},
+    {v:1e10,l:null}
+  ],
+  // Warehouse Freezer (M54:P70)
+  wh_freezer: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:3275.6563},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:9826.9690},{v:36100,l:13102.6253},{v:45100,l:13102.6253},
+    {v:58100,l:19653.9379},{v:105100,l:19653.9379},{v:155000,l:19653.9379},
+    {v:175500,l:39307.8758},{v:1e10,l:null}
+  ],
+  // Floral Cooler (C79:F94)
+  floral: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:2183.77088},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:6551.3126},{v:36100,l:8735.0835},{v:45100,l:6551.3126},
+    {v:58100,l:9826.9690},{v:105100,l:19653.9379},{v:155000,l:26205.2506},
+    {v:1e10,l:null}
+  ],
+  // Produce Warehouse (M79:P94)
+  produce_wh: [
+    {v:0,l:341.2142},{v:600,l:682.4284},{v:1350,l:1023.6426},
+    {v:2570,l:1364.8568},{v:4810,l:1706.071},{v:5770,l:2047.2852},
+    {v:6260,l:2183.77088},{v:12100,l:3275.6563},{v:16900,l:4367.54176},
+    {v:21700,l:6551.3126},{v:36100,l:8735.0835},{v:45100,l:6551.3126},
+    {v:58100,l:9826.9690},{v:105100,l:19653.9379},{v:155000,l:26205.2506},
+    {v:1e10,l:null}
+  ],
+};
+
+// Floor Q lookup
+const FLOOR_Q = {
+  cooler:       {'On Grade':1104.2894,'Above Grade':1602.5641,'Above Grade (No gap)':552.1447},
+  freezer:      {'On Grade':491.6104,'Above Grade':293.9356},
+  csc:          {'On Grade':20538.4310,'Above Grade':43269.2308},
+  produce_cooler: {'On Grade':17636.2142,'Above Grade':52884.6154},
+  wh_cooler:    {'On Grade':16374.8308,'Above Grade':54086.5385},
+  wh_freezer:   {'On Grade':12446.4181,'Above Grade':14621.2403},
+  floral:       {'On Grade':17719.7762,'Above Grade':52083.3333},
+  produce_wh:   {'On Grade':22091.8920,'Above Grade':79326.9231},
+};
+
+// dh (enthalpy differences)
+const DH = {
+  cooler: 55.6322,
+  freezer: 87.9533,
+  csc: 51.2165,
+  produce_cooler: 59.3880,
+  wh_cooler: 50.5618,
+  wh_freezer: 114.5357,
+  floral: 85.9287,
+  produce_wh: 69.8695,
+};
+
+// ───────────────────────────────────────────────────────
+// MATCH with type 1 (largest value <= volume)
+function matchLTE(vol, table) {
+  let result = table[0].l;
+  for (let i = 0; i < table.length - 1; i++) {
+    if (vol >= table[i].v) result = table[i].l;
+    else break;
+  }
+  return result;
+}
+
+function gv(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function gs(id) { return document.getElementById(id).value; }
+function fmt(n) { return n.toLocaleString('en-US',{maximumFractionDigits:0}); }
+
+// ───────────────────────────────────────────────────────
+// RENDER RESULTS
+function renderResults(prefix, label, inputs, loads, SF, RT) {
+  const totalHourly = loads.reduce((a,b) => a + b.btu, 0);
+  const totalSF = totalHourly * (100 + SF) / 100;
+  const capacity = totalSF * 24 / RT;
+
+  // show block
+  document.getElementById(prefix+'_results').style.display = 'block';
+  document.getElementById(prefix+'_results').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // echo
+  document.getElementById(prefix+'_echo').innerHTML =
+    inputs.map(([k,v]) =>
+      `<div class="echo-item"><span class="ek">${k}</span><span class="ev">${v}</span></div>`
+    ).join('');
+
+  // summary cards
+  document.getElementById(prefix+'_summary').innerHTML = `
+    <div class="s-card"><div class="s-label">Total Hourly Load</div>
+      <div class="s-value">${fmt(totalHourly)}</div><div class="s-unit">BTU/hr</div></div>
+    <div class="s-card"><div class="s-label">Total w/ Safety Factor</div>
+      <div class="s-value">${fmt(totalSF)}</div><div class="s-unit">BTU/hr · SF: ${SF}%</div></div>
+    <div class="s-card hl"><div class="s-label">Capacity Required</div>
+      <div class="s-value">${fmt(capacity)}</div><div class="s-unit">BTU/day · Run: ${RT} hrs</div></div>
+  `;
+
+  const maxVal = Math.max(...loads.map(r => r.btu));
+  const rows = loads.map(r => `
+    <tr>
+      <td>${r.name}</td>
+      <td><span class="bar-track"><span class="bar-fill" style="width:${(r.btu/maxVal*100).toFixed(1)}%"></span></span></td>
+      <td class="vcel">${fmt(r.btu)} <span style="color:var(--muted);font-size:10px">BTU/hr</span></td>
+      <td class="pcel">${((r.btu/totalHourly)*100).toFixed(1)}%</td>
+    </tr>`).join('');
+
+  document.getElementById(prefix+'_table').innerHTML = `
+    <thead><tr>
+      <th style="width:200px">Load Component</th>
+      <th style="text-align:left">Distribution</th>
+      <th>Value</th><th>Share</th>
+    </tr></thead>
+    <tbody>
+      ${rows}
+      <tr class="trow"><td colspan="2"><strong>Total Hourly Load</strong></td>
+        <td class="vcel">${fmt(totalHourly)} <span style="font-size:10px;color:var(--muted)">BTU/hr</span></td>
+        <td>100%</td></tr>
+      <tr class="trow"><td colspan="2"><strong>Total Load (w/ ${SF}% SF)</strong></td>
+        <td class="vcel">${fmt(totalSF)} <span style="font-size:10px;color:var(--muted)">BTU/hr</span></td>
+        <td>—</td></tr>
+      <tr class="trow"><td colspan="2"><strong>Capacity Required (${RT} hrs)</strong></td>
+        <td class="vcel">${fmt(capacity)} <span style="font-size:10px;color:var(--muted)">BTU/day</span></td>
+        <td>—</td></tr>
+    </tbody>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// CALC FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+// ── General Walk-in Cooler ──────────────────────────────
+function calcGWC() {
+  const Ti=gv('gwc_Ti'),To=gv('gwc_To'),L=gv('gwc_L'),D=gv('gwc_D'),H=gv('gwc_H');
+  const floor=gs('gwc_floor'),SF=gv('gwc_SF'),RT=gv('gwc_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.cooler[floor];
+  const productLoad = 2*L*D*H*0.77*10/24;
+  const miscLoad = L*D*3.41 + matchLTE(vol,MISC.cooler);
+  const infiltrationLoad = 0.0001367*Math.pow(vol,0.5425)*DH.cooler*3412.142;
+  renderResults('gwc','gwc',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('gwc_RHi')+'%'],['RH Out',gv('gwc_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Walk-in Cooler with DR ─────────────────────────────
+function calcGWC_DR() {
+  const Ti=gv('gwcdr_Ti'),To=gv('gwcdr_To'),L=gv('gwcdr_L'),D=gv('gwcdr_D'),H=gv('gwcdr_H');
+  const floor=gs('gwcdr_floor'),SF=gv('gwcdr_SF'),RT=gv('gwcdr_RT'),doors=gv('gwcdr_doors');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.cooler[floor];
+  const productLoad = 2*L*D*H*0.77*10/24;
+  const miscLoad = L*D*3.41 + matchLTE(vol,MISC.cooler);
+  const doorFactor = Math.min(1+0.2*(doors-1),1.5);
+  const infiltrationLoad = 0.0001367*Math.pow(vol,0.5425)*DH.cooler*3412.142*1.45*doorFactor;
+  renderResults('gwcdr','gwcdr',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('gwcdr_RHi')+'%'],['RH Out',gv('gwcdr_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['No. of Doors',doors],['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── General Walk-in Freezer ────────────────────────────
+function calcGWF() {
+  const Ti=gv('gwf_Ti'),To=gv('gwf_To'),L=gv('gwf_L'),D=gv('gwf_D'),H=gv('gwf_H');
+  const floor=gs('gwf_floor'),SF=gv('gwf_SF'),RT=gv('gwf_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.freezer[floor];
+  const productLoad = L*D*H*0.43*10/24;
+  const miscLoad = L*D*3.41 + matchLTE(vol,MISC.freezer);
+  const infiltrationLoad = 0.0001367*Math.pow(vol,0.5425)*DH.freezer*3412.142;
+  renderResults('gwf','gwf',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('gwf_RHi')+'%'],['RH Out',gv('gwf_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Walk-in Freezer with DR ────────────────────────────
+function calcGWF_DR() {
+  const Ti=gv('gwfdr_Ti'),To=gv('gwfdr_To'),L=gv('gwfdr_L'),D=gv('gwfdr_D'),H=gv('gwfdr_H');
+  const floor=gs('gwfdr_floor'),SF=gv('gwfdr_SF'),RT=gv('gwfdr_RT'),doors=gv('gwfdr_doors');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.freezer[floor];
+  const productLoad = L*D*H*0.43*10/24;
+  const miscLoad = L*D*3.41 + matchLTE(vol,MISC.freezer);
+  const doorFactor = Math.min(1+0.15*(doors-1),1.4);
+  const infiltrationLoad = 0.0001367*Math.pow(vol,0.5425)*DH.freezer*3412.142*1.45*doorFactor;
+  renderResults('gwfdr','gwfdr',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('gwfdr_RHi')+'%'],['RH Out',gv('gwfdr_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['No. of Doors',doors],['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Convenience Store Cooler ───────────────────────────
+function calcCSC() {
+  const Ti=gv('csc_Ti'),To=gv('csc_To'),L=gv('csc_L'),D=gv('csc_D'),H=gv('csc_H');
+  const floor=gs('csc_floor'),SF=gv('csc_SF'),RT=gv('csc_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.csc[floor];
+  const productLoad = 2*L*D*H*10*0.77/16;
+  const miscLoad = L*D*3.41 + matchLTE(vol,MISC.csc);
+  const infiltrationLoad = 1.7*0.0001367*Math.pow(vol,0.5425)*DH.csc*3412.142;
+  renderResults('csc','csc',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('csc_RHi')+'%'],['RH Out',gv('csc_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load (1.7×)',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Produce Cooler ─────────────────────────────────────
+function calcPC() {
+  const Ti=gv('pc_Ti'),To=gv('pc_To'),L=gv('pc_L'),D=gv('pc_D'),H=gv('pc_H');
+  const floor=gs('pc_floor'),SF=gv('pc_SF'),RT=gv('pc_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.produce_cooler[floor];
+  const productLoad = 2*L*D*H*10*0.77/16;
+  const miscLoad = L*D*3.41 + matchLTE(vol,MISC.produce_cooler);
+  const infiltrationLoad = Math.exp(-0.76578)*Math.pow(vol,0.604316)*Math.pow(DH.produce_cooler,0.855344);
+  renderResults('pc','pc',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('pc_RHi')+'%'],['RH Out',gv('pc_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Floral Cooler ──────────────────────────────────────
+function calcFC() {
+  const Ti=gv('fc_Ti'),To=gv('fc_To'),L=gv('fc_L'),D=gv('fc_D'),H=gv('fc_H');
+  const floor=gs('fc_floor'),SF=gv('fc_SF'),RT=gv('fc_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.floral[floor];
+  const productLoad = L*D*H*10*0.77/24;
+  const miscLoad = L*D*3.412*1 + matchLTE(vol,MISC.floral);
+  const infiltrationLoad = Math.exp(-0.832116360651863)*Math.pow(vol,0.515379988125453)*Math.pow(DH.floral,1.01725235117876);
+  renderResults('fc','fc',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('fc_RHi')+'%'],['RH Out',gv('fc_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Warehouse Cooler ───────────────────────────────────
+function calcWC() {
+  const Ti=gv('wc_Ti'),To=gv('wc_To'),L=gv('wc_L'),D=gv('wc_D'),H=gv('wc_H');
+  const floor=gs('wc_floor'),SF=gv('wc_SF'),RT=gv('wc_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.wh_cooler[floor];
+  const productLoad = L*D*H/3.003*10*0.77/24;
+  const miscLoad = 5500+1190+L*D*3.412*2 + matchLTE(vol,MISC.wh_cooler);
+  const infiltrationLoad = Math.exp(-2.12574098749113)*Math.pow(vol,0.671769546909657)*Math.pow(DH.wh_cooler,0.989037300244508);
+  renderResults('wc','wc',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('wc_RHi')+'%'],['RH Out',gv('wc_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load (incl. lighting+forklifts)',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Warehouse Freezer ──────────────────────────────────
+function calcWF() {
+  const Ti=gv('wf_Ti'),To=gv('wf_To'),L=gv('wf_L'),D=gv('wf_D'),H=gv('wf_H');
+  const floor=gs('wf_floor'),SF=gv('wf_SF'),RT=gv('wf_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.wh_freezer[floor];
+  const productLoad = L*D*H/3.003*(10*0.43/24);
+  const miscLoad = 5500+1880+L*D*3.412*2 + matchLTE(vol,MISC.wh_freezer);
+  const infiltrationLoad = 0.0001299*Math.pow(vol,0.5135)*DH.wh_freezer*3412.142;
+  renderResults('wf','wf',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('wf_RHi')+'%'],['RH Out',gv('wf_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load',btu:productLoad},
+     {name:'Miscellaneous Load (incl. lighting+motors)',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ── Produce Warehouse ──────────────────────────────────
+function calcPW() {
+  const Ti=gv('pw_Ti'),To=gv('pw_To'),L=gv('pw_L'),D=gv('pw_D'),H=gv('pw_H');
+  const floor=gs('pw_floor'),SF=gv('pw_SF'),RT=gv('pw_RT');
+  const vol=L*D*H;
+  const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + FLOOR_Q.produce_wh[floor];
+  const productLoad = L*D*H*0.333*10*1.1604/24;
+  const miscLoad = 5500+1190+L*D*3.412*2 + matchLTE(vol,MISC.produce_wh);
+  const infiltrationLoad = Math.exp(-0.832116360651863)*Math.pow(vol,0.515379988125453)*Math.pow(DH.produce_wh,1.01725235117876);
+  renderResults('pw','pw',
+    [['Interior Temp',Ti+'°F'],['Exterior Temp',To+'°F'],['RH In',gv('pw_RHi')+'%'],['RH Out',gv('pw_RHo')+'%'],
+     ['Dimensions',`${L}×${D}×${H} ft`],['Volume',fmt(vol)+' ft³'],['Floor Type',floor],
+     ['Safety Factor',SF+'%'],['Run Time',RT+' hrs/day']],
+    [{name:'Wall Load',btu:wallLoad},{name:'Product Load (w/ respiration)',btu:productLoad},
+     {name:'Miscellaneous Load (incl. lighting+forklifts)',btu:miscLoad},{name:'Infiltration Load',btu:infiltrationLoad}],
+    SF,RT);
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Match nav item
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${id}'`)) {
+      n.classList.add('active');
+    }
+  });
+}
+</script>
+</body>
+</html>
