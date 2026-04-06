@@ -1892,7 +1892,8 @@ function calcWF() {
   const L=gv('wf_L'),D=gv('wf_D'),H=gv('wf_H');
   const floor=gs('wf_floor'),SF=gv('wf_SF'),RT=gv('wf_RT');
   const vol=L*D*H;
-  const dh=calcDH(To,Ti,RHo,RHi);
+  // WH Freezer e_out uses exterior temp (To) per Excel Background!T64
+  const dh=calcDH(To,Ti,To,RHi);
   const wallLoad = (1/28.57)*(To-Ti)*(2*L*H+2*D*H+L*D) + calcFloorQ('wh_freezer',floor,L,D,To,Ti);
   const productLoad = L*D*H/3.003*(10*0.43/24);
   const miscLoad = 5500+1880+L*D*3.412*2 + matchLTE(vol,MISC.wh_freezer);
